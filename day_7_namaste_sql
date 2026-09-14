@@ -1,0 +1,151 @@
+create table icc_world_cup
+(
+Team_1 Varchar(20),
+Team_2 Varchar(20),
+Winner Varchar(20)
+);
+INSERT INTO icc_world_cup values('India','SL','India');
+INSERT INTO icc_world_cup values('SL','Aus','Aus');
+INSERT INTO icc_world_cup values('SA','Eng','Eng');
+INSERT INTO icc_world_cup values('Eng','NZ','NZ');
+INSERT INTO icc_world_cup values('Aus','India','India');
+
+/*
+1- write a query to produce below output from icc_world_cup table.
+team_name, no_of_matches_played , no_of_wins , no_of_losses 
+*/
+
+SELECT * FROM icc_world_cup;
+
+SELECT team_name, 
+COUNT(1) AS no_of_matches_played
+, SUM(win_flag) AS no_of_wins
+, COUNT(1) - SUM(win_flag) AS no_of_losses
+FROM 
+(
+SELECT team_1 AS team_name, CASE WHEN team_1 = winner THEN 1 ELSE 0 END AS win_flag FROM icc_world_cup
+UNION ALL
+SELECT team_2, CASE WHEN team_2 = winner THEN 1 ELSE 0 END AS win_flag FROM icc_world_cup
+) all_matches
+GROUP BY team_name ;
+
+/*
+2- write a query to print first name and last name of a customer using orders table(everything after first space can be considered as last name)
+customer_name, first_name,last_name
+
+
+*/
+-- i wrote 
+SELECT customer_name,
+SUBSTRING(customer_name, 1, CHARINDEX(' ',customer_name, 1)) AS first_name,
+SUBSTRING(customer_name, CHARINDEX(' ',customer_name, 1) + 1, LEN(customer_name) ) AS last_name
+FROM orders; 
+
+
+-- correct 
+
+
+select customer_name , trim(SUBSTRING(customer_name,1,CHARINDEX(' ',customer_name))) as first_name
+, SUBSTRING(customer_name,CHARINDEX(' ',customer_name)+1,len(customer_name)-CHARINDEX(' ',customer_name)+1) as second_name
+from orders
+
+
+
+
+/*
+Run below script to create drivers table:
+
+create table drivers(id varchar(10), start_time time, end_time time, start_loc varchar(10), end_loc varchar(10));
+insert into drivers values('dri_1', '09:00', '09:30', 'a','b'),('dri_1', '09:30', '10:30', 'b','c'),('dri_1','11:00','11:30', 'd','e');
+insert into drivers values('dri_1', '12:00', '12:30', 'f','g'),('dri_1', '13:30', '14:30', 'c','h');
+insert into drivers values('dri_2', '12:15', '12:30', 'f','g'),('dri_2', '13:30', '14:30', 'c','h');
+
+3- write a query to print below output using drivers table. Profit rides are the no of rides where end location of a ride is same as start location of immediate next ride for a driver
+id, total_rides , profit_rides
+dri_1,5,1
+dri_2,2,0
+
+*/
+
+SELECT * FROM drivers ;
+
+SELECT d.id,COUNT(1) AS total_rides, COUNT(dl.id) AS profit_rides 
+FROM drivers d
+LEFT JOIN drivers dl 
+ON d.end_loc = dl.start_loc AND d.end_time = dl.start_time
+GROUP BY d.id
+
+
+/*
+4- write a query to print customer name and no of occurence of character 'n' in the customer name.
+customer_name , count_of_occurence_of_n
+*/
+ -- i count write
+
+ -- solution - smart - replace n with nothing -- then that count in total lenght.
+
+ select 
+ customer_name , len(customer_name)-len(replace(lower(customer_name),'n','')) as count_of_occurence_of_n
+from orders
+
+SELECT * FROM orders 
+5-write a query to print below output from orders data. example output
+hierarchy type,hierarchy name ,total_sales_in_west_region,total_sales_in_east_region
+category , Technology, ,
+category, Furniture, ,
+category, Office Supplies, ,
+sub_category, Art , ,
+sub_category, Furnishings, ,
+--and so on all the category ,subcategory and ship_mode hierarchies 
+
+
+SELECT 'category' AS hierarchy_type, category AS hierarchy_name
+, SUM (CASE WHEN region = 'West' THEN sales ELSE 0 END) AS total_sales_in_west_region
+, SUM (CASE WHEN region = 'East' THEN sales ELSE 0 END) AS total_sales_in_east_region
+FROM orders 
+GROUP BY category
+UNION ALL
+SELECT 'sub-category' AS hierarchy_type, sub_category AS hierarchy_name
+, SUM (CASE WHEN region = 'West' THEN sales ELSE 0 END) AS total_sales_in_west_region
+, SUM (CASE WHEN region = 'East' THEN sales ELSE 0 END) AS total_sales_in_east_region
+FROM orders 
+GROUP BY sub_category
+UNION ALL
+SELECT 'ship_mode' AS hierarchy_type, ship_mode AS hierarchy_name
+, SUM (CASE WHEN region = 'West' THEN sales ELSE 0 END) AS total_sales_in_west_region
+, SUM (CASE WHEN region = 'East' THEN sales ELSE 0 END) AS total_sales_in_east_region
+FROM orders 
+GROUP BY ship_mode;
+
+
+/*
+6- the first 2 characters of order_id represents the country of order placed . write a query to print total no of orders placed in each country
+(an order can have 2 rows in the data when more than 1 item was purchased in the order but it should be considered as 1 order)
+
+*/
+
+SELECT SUBSTRING(order_id, 1, 2) AS country, COUNT(1) AS total_orders
+FROM (
+SELECT DISTINCT order_id FROM orders
+) ded_orders
+GROUP BY SUBSTRING(order_id, 1, 2) ;
+
+
+select left(order_id,2) as country, count(distinct order_id) as total_orders
+from orders 
+group by left(order_id,2) ;
+
+
+SELECT SUBSTRING(order_id, 1, 2) AS country, COUNT(DISTINCT order_id) AS total_orders
+FROM orders 
+GROUP BY SUBSTRING(order_id, 1,2)
+
+SELECT SUBSTRING(order_id, 1, 2) AS country, COUNT( order_id) AS total_orders
+FROM orders 
+GROUP BY SUBSTRING(order_id, 1,2)
+
+
+
+
+
+
